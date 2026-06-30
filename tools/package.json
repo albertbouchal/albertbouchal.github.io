@@ -1,0 +1,14 @@
+{
+  "name": "albert-bouchal-site-map-tool",
+  "private": true,
+  "type": "module",
+  "description": "Optional: regenerates the country <path> list for ../world-map.svg. Run: npm install && node generate.mjs (writes paths.txt).",
+  "scripts": {
+    "generate": "node generate.mjs"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  }
+}

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Albert Bouchal — co-founder @czechrockets</title>
+  <meta name="description" content="Albert Bouchal — co-founder of the Czech Rocket Society, space geek, sci-fi reader, and traveller through 35+ countries. Personal site." />
+  <meta name="theme-color" content="#0f0f0f" />
+  <meta name="color-scheme" content="dark light" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Albert Bouchal" />
+  <meta property="og:description" content="Co-founder @czechrockets · space geek · usually somewhere with a different timezone." />
+  <!-- TODO Albert: set this to your real deployed URL once it's live -->
+  <meta property="og:url" content="https://alb.earth" />
+  <meta name="twitter:card" content="summary" />
+
+  <!-- Tiny inline favicon: the ↗ mark, in the accent teal -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f0f0f'/%3E%3Ctext x='16' y='23' font-size='22' text-anchor='middle' fill='%234ecdc4' font-family='monospace'%3E%E2%86%97%3C/text%3E%3C/svg%3E" />
+
+  <!-- Inter (body/headings) + JetBrains Mono (data/utility). Solid system fallbacks below. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-head">
+    <div class="head-inner">
+      <a class="wordmark" href="#top">albert bouchal<span class="dot">.</span></a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#work">Projects</a>
+        <a href="#favorites">Favorites</a>
+        <a href="#travel">Travel</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero wide" id="top" aria-labelledby="hero-name">
+      <!-- TODO Albert: this is a geo-stamp (Prague). Change the coordinates, or delete this line. -->
+      <p class="hero-geo">↗ 50.08&deg;N&nbsp;&nbsp;14.44&deg;E</p>
+      <h1 class="name" id="hero-name">Albert Bouchal</h1>
+      <p class="tagline">
+        Co-founder
+        <!-- TODO Albert: point this at your real @czechrockets profile (X / Instagram) -->
+        <a class="inline-link" href="https://czechrockets.com" target="_blank" rel="noopener noreferrer">@czechrockets</a>
+        · space geek · usually somewhere with a different timezone.
+      </p>
+
+      <!-- Two live instruments, side by side on wide screens -->
+      <div class="hero-instruments">
+
+        <!-- ★ Signature element: how far Earth has carried you since the page loaded ★ -->
+        <div class="counter">
+          <p class="sr-only">A live counter showing how far Earth has carried you through its orbit since this page loaded — about 29.8 kilometres every second. Below it, a flight-path arc bounces a dot between Prague and Amsterdam (about 890 km apart) to give the distance a human-scale reference; the dot completes one crossing roughly every 30 seconds.</p>
+          <p class="inst-label" aria-hidden="true">You travelled</p>
+          <div class="counter-readout" aria-hidden="true">
+            <span class="counter-arrow">↗</span>
+            <span class="counter-num" id="km-counter"><span class="num-ghost">000,00</span>0</span>
+            <span class="counter-unit">km through space</span>
+          </div>
+          <p class="counter-sub" aria-hidden="true">since you opened this page <span class="live-dot"></span></p>
+          <svg class="ping-track" viewBox="0 0 160 160" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+            <path class="ping-rail" d="M 4,128 Q 80,12 156,128" />
+            <circle class="ping-end" cx="4" cy="128" r="2.5" />
+            <circle class="ping-end" cx="156" cy="128" r="2.5" />
+            <text class="ping-label" x="4" y="144" text-anchor="start">AMS</text>
+            <text class="ping-label" x="156" y="144" text-anchor="end">PRG</text>
+            <circle class="ping-dot" id="ping-dot" cx="156" cy="128" r="4" />
+          </svg>
+          <p class="ping-foot" aria-hidden="true">≈ <span id="ping-count">0</span> Prague–Amsterdam crossings</p>
+          <p class="counter-foot">Earth's orbital speed around the Sun: ~29.8 km/s</p>
+        </div>
+
+        <!-- Earth-rotation clock: how far Earth has turned since the last sunrise here, drawn
+             as an arc of a full turn. Scrub it with the keyboard (handled in main.js):
+             A / D step ±1 h (hold to cruise), S returns to now. -->
+        <div class="spin">
+          <p class="sr-only">An Earth-rotation clock: how far the planet has turned since the most recent sunrise in Prague, shown as an arc of a full 360-degree turn, with an estimate of how far that has carried you east. You can travel through time with the keyboard — D moves forward, A moves back, and S returns to now.</p>
+          <p class="inst-label" aria-hidden="true">The Earth has rotated</p>
+          <div class="spin-readout" aria-hidden="true">
+            <span class="spin-arrow">⟳</span>
+            <span class="spin-num" id="deg-counter"><span class="num-ghost">000.0</span>0°</span>
+            <span class="spin-unit">around its axis</span>
+          </div>
+          <p class="spin-sub" aria-hidden="true">since sunrise</p>
+          <svg class="spin-track" viewBox="0 0 160 160" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+            <circle class="spin-ring" cx="80" cy="80" r="64" />
+            <path class="spin-arc" id="spin-arc" d="" />
+            <circle class="spin-head" id="spin-head" cx="80" cy="16" r="4" />
+          </svg>
+          <p class="spin-foot" aria-hidden="true">≈ <span id="spin-dist">0</span> km carried east at 50.08° N</p>
+          <p class="spin-ctrl" aria-hidden="true"><span id="spin-tt">live</span> · <kbd>A</kbd> <kbd>D</kbd> travel time · <kbd>S</kbd> now</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== ABOUT ===================== -->
+    <section id="about" aria-labelledby="about-h">
+      <div class="wide">
+        <p class="eyebrow">About</p>
+        <h2 class="lead" id="about-h">I build things to understand them.</h2>
+        <div class="about-body">
+          <p>
+            Away from the workbench I'm usually deep in science fiction — Liu Cixin's
+            <em>Three-Body Problem</em> trilogy quietly rearranged how I think about scale, time, and how
+            fragile a civilisation can be.
+          </p>
+          <p>
+            I like systems and order: things in their right place, named well, easy to reason about. The same
+            instinct follows me into music and film. I go out of my way for good math, alternative, and
+            progressive rock, and for things worth watching closely — with a real IMAX here in Prague, I'm in it
+            for the camera as much as the story: a great lens and a plot that earns its runtime, in films and
+            series alike.
+          </p>
+          <!-- TODO Albert: add a sentence or two that's specifically *you* — what you studied,
+               what you do day to day, and a real photo if you want one here. -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PROJECTS / WORK ===================== -->
+    <section id="work" aria-labelledby="work-h">
+      <div class="wide">
+        <p class="eyebrow">Selected work</p>
+        <h2 class="lead" id="work-h">Things I've built and helped run.</h2>
+
+        <!-- Featured project -->
+        <article class="proj proj-feature">
+          <p class="proj-tag">Featured</p>
+          <div class="proj-top">
+            <h3 class="proj-title">Czech Rocket Society</h3>
+            <span class="proj-role">Co-founder</span>
+          </div>
+          <p class="proj-desc">
+            A community of engineers, students, and the stubbornly curious, designing and flying rockets from the
+            Czech Republic — and proving you don't need a national agency to take spaceflight seriously.
+          </p>
+          <a class="proj-link" href="https://czechrockets.com" target="_blank" rel="noopener noreferrer">czechrockets.com&nbsp;↗</a>
+          <!-- TODO Albert: this is where recruiters look first. Add 2–3 concrete bullets:
+               what YOU personally built or led, the hardest engineering problem you solved, and a
+               measurable outcome (altitude reached, launches flown, team size, funding raised, etc.).
+               Name the skills/stack you used. Be specific — this section is your proof of ability. -->
+        </article>
+
+        <!-- Placeholder slot -->
+        <article class="proj">
+          <div class="proj-top">
+            <h3 class="proj-title">Project two</h3>
+            <span class="proj-role">Your role</span>
+          </div>
+          <p class="proj-desc">One line on what it is and why it mattered.</p>
+          <a class="proj-link" href="#">link&nbsp;↗</a>
+          <!-- TODO Albert: title · one-line description · your role · the outcome ·
+               the stack/skills (e.g. embedded C, KiCad, Python, CAD, web) · a real link. -->
+        </article>
+
+        <!-- Placeholder slot -->
+        <article class="proj">
+          <div class="proj-top">
+            <h3 class="proj-title">Project three</h3>
+            <span class="proj-role">Your role</span>
+          </div>
+          <p class="proj-desc">One line on what it is and why it mattered.</p>
+          <a class="proj-link" href="#">link&nbsp;↗</a>
+          <!-- TODO Albert: same as above. Add or remove these slots freely. -->
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== FAVORITES ===================== -->
+    <section id="favorites" aria-labelledby="fav-h">
+      <div class="wide">
+        <p class="eyebrow">Favorites</p>
+        <h2 class="lead" id="fav-h">What I'm into right now.</h2>
+        <p class="fav-note">A rotating few — I swap a card whenever something new earns the slot.</p>
+
+        <!-- TODO Albert: these are meant to change often (think "pick of the month").
+             To swap one, edit the title, the blurb, and the little date on the right.
+             Add or remove cards freely — the grid reflows on its own. -->
+        <ul class="fav-cards">
+          <li class="fav-card">
+            <div class="fav-card-top">
+              <p class="fav-cat">Launcher</p>
+              <span class="fav-when">Jun 2026</span>
+            </div>
+            <h3 class="fav-title">Falcon 9</h3>
+            <p class="fav-desc">Reliability you almost take for granted now — a booster that lands and flies again,
+              and that nine-engine roar on ascent you feel a beat before you hear it.</p>
+          </li>
+          <li class="fav-card">
+            <div class="fav-card-top">
+              <p class="fav-cat">Mission</p>
+              <span class="fav-when">Jun 2026</span>
+            </div>
+            <h3 class="fav-title">Crew Dragon Demo-2</h3>
+            <p class="fav-desc">Bob and Doug, May 2020 — the first crewed commercial flight to orbit. The engineering
+              was historic; the two people strapped inside were the whole point.</p>
+          </li>
+          <li class="fav-card">
+            <div class="fav-card-top">
+              <p class="fav-cat">Reading</p>
+              <span class="fav-when">Jun 2026</span>
+            </div>
+            <h3 class="fav-title">The Three-Body Problem</h3>
+            <p class="fav-desc">Liu Cixin's trilogy. Hard sci-fi that treats physics as plot and the universe as
+              something structurally, genuinely dangerous. It quietly ruined lesser space opera for me.</p>
+          </li>
+        </ul>
+
+        <p class="eyebrow eyebrow-sub">In the kit</p>
+        <!-- TODO Albert: add tools the same way — a small inline SVG (use currentColor so it
+             matches the theme) + the name + the link. -->
+        <ul class="kit" aria-label="Tools I use">
+          <li>
+            <a class="kit-item" href="https://www.notion.so" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M9 16.5v-9l6 9v-9"/></svg>
+              Notion
+            </a>
+          </li>
+          <li>
+            <a class="kit-item" href="https://typst.app" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v11.5a2.5 2.5 0 0 0 2.5 2.5H13"/><path d="M6 8.5h7.5"/></svg>
+              Typst
+            </a>
+          </li>
+          <li>
+            <a class="kit-item" href="https://obsidian.md" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 19 8l-2.5 13H7.5L5 8z"/><path d="M12 2.5 9.5 11l3.5 10M19 8l-6 3"/></svg>
+              Obsidian
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== TRAVEL ===================== -->
+    <section id="travel" aria-labelledby="travel-h">
+      <div class="wide">
+        <p class="eyebrow">Travel</p>
+        <div class="travel-head">
+          <h2 class="travel-h" id="travel-h">31 countries on the map</h2>
+          <div class="travel-count">
+            <span class="count-num" id="country-count">31</span>
+            <span class="count-label">countries visited · more incoming</span>
+          </div>
+        </div>
+
+        <figure class="map-wrap">
+          <div class="map-scroll" aria-busy="true">
+            <noscript><p class="map-fallback">The interactive world map needs JavaScript — the countries I’ve visited are listed just below.</p></noscript>
+          </div>
+
+          <div class="tooltip" id="map-tip" role="presentation" hidden></div>
+
+          <figcaption class="map-legend">
+            <span><span class="sw sw-visited"></span>Visited</span>
+            <span><span class="sw sw-none"></span>Not yet</span>
+            <span class="lg-note">Hover a highlighted country — write-ups are coming.</span>
+          </figcaption>
+        </figure>
+
+        <!-- Built from the map on load, so the list can never drift from the highlights.
+             Each item keeps its data-slug, ready to become a link once the blog exists.
+             For now, activating a name finds that country on the map above. -->
+        <div class="vl-head">
+          <p class="vl-title">On the map</p>
+          <span class="vl-hint">tap a name to find it&nbsp;↑</span>
+        </div>
+        <div class="visited-list" id="visited-list" aria-label="Countries highlighted on the map — tap a name to locate it"></div>
+
+        <!-- Flightradar24 live banner. The PNG at banners-my.flightradar24.com/<user>.png is
+             rendered server-side from Albert’s myFR24 account and refreshes on its own (FR24
+             caches it, so updates can lag a few days). We just frame it to match the site and
+             fall back to a plain link if FR24 can’t be reached.
+             TODO Albert: swap ‘albert96’ in BOTH URLs below if your Flightradar24 username changes. -->
+        <aside class="fr24" aria-labelledby="fr24-h">
+          <div class="fr24-head">
+            <p class="eyebrow eyebrow-sub" id="fr24-h">In the air</p>
+            <span class="fr24-live"><span class="live-dot"></span>live · flightradar24</span>
+          </div>
+          <a class="fr24-frame" href="https://my.flightradar24.com/albert96" target="_blank" rel="noopener noreferrer" aria-label="Open my Flightradar24 profile in a new tab">
+            <img class="fr24-img" src="https://banners-my.flightradar24.com/albert96.png"
+                 alt="Flightradar24 summary for Albert — flights tracked, distance flown, and a route map"
+                 loading="lazy" decoding="async"
+                 onerror="this.style.display=’none’;var f=this.parentNode.querySelector(‘.fr24-fallback’);if(f)f.hidden=false;">
+            <span class="fr24-fallback" hidden>See my flight log on Flightradar24&nbsp;↗</span>
+          </a>
+          <p class="fr24-cap">Pulled straight from my Flightradar24 log — it refreshes on its own as new flights are added.</p>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================== CONTACT ===================== -->
+    <section id="contact" aria-labelledby="contact-h">
+      <div class="wide">
+        <p class="eyebrow">Contact</p>
+        <h2 class="lead" id="contact-h">Find me online, or reach out directly.</h2>
+        <ul class="links" aria-label="Contact links">
+          <li>
+            <!-- TODO Albert: your GitHub URL -->
+            <a href="https://github.com/albertbouchal" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.2 3.44 9.6 8.21 11.16.6.11.82-.25.82-.56v-2.2c-3.34.71-4.04-1.4-4.04-1.4-.55-1.36-1.34-1.72-1.34-1.72-1.09-.72.08-.71.08-.71 1.2.08 1.83 1.21 1.83 1.21 1.07 1.78 2.81 1.27 3.5.97.11-.76.42-1.27.76-1.56-2.67-.29-5.47-1.31-5.47-5.84 0-1.29.47-2.34 1.24-3.17-.12-.29-.54-1.46.12-3.05 0 0 1.01-.31 3.3 1.21a11.6 11.6 0 0 1 6 0c2.29-1.52 3.3-1.21 3.3-1.21.66 1.59.24 2.76.12 3.05.77.83 1.24 1.88 1.24 3.17 0 4.54-2.81 5.55-5.49 5.83.43.36.81 1.08.81 2.18v3.23c0 .31.22.68.83.56C20.57 21.88 24 17.48 24 12.29 24 5.78 18.63.5 12 .5Z"/></svg>
+              GitHub
+            </a>
+          </li>
+          <li>
+            <!-- TODO Albert: your LinkedIn URL -->
+            <a href="https://www.linkedin.com/in/albertbouchal" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14ZM7.12 20.45H3.55V9h3.57v11.45ZM22.22 0H1.77C.8 0 0 .78 0 1.74v20.52C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.74V1.74C24 .78 23.2 0 22.22 0Z"/></svg>
+              LinkedIn
+            </a>
+          </li>
+          <li>
+            <!-- TODO Albert: your email -->
+            <a href="mailto:albertbouchal@email.cz" aria-label="Email">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
+              Email
+            </a>
+          </li>
+          <li>
+            <a href="https://x.com/albertbouchal" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
+              @albertbouchal
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <div class="foot-inner">
+      <p class="foot-line">© <span id="year">2026</span> Albert Bouchal</p>
+      <p class="foot-sub">
+        <!-- TODO Albert: link this to your repo once it's up -->
+        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">Source&nbsp;↗</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
