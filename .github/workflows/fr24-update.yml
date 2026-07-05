@@ -1,0 +1,39 @@
+name: Update FlightRadar24 stats
+
+# Refreshes fr24-stats.json (rendered on the site by main.js) from Albert's Flightradar24
+# summary banner. FR24 doesn't expose these totals as data, only as a small PNG, so
+# tools/fetch-fr24.mjs OCRs it and this workflow commits the result only when a number
+# actually changed — see that script for the parsing details.
+on:
+  schedule:
+    - cron: '0 6 1,15 * *'   # twice a month (~every 2 weeks); cron has no native "every 14 days"
+  workflow_dispatch: {}       # allows a manual run from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install OCR tools
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr imagemagick
+
+      - name: Fetch and parse FR24 banner
+        id: fr24
+        run: node tools/fetch-fr24.mjs
+
+      - name: Commit fr24-stats.json if it changed
+        if: steps.fr24.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add fr24-stats.json
+          git commit -m "Update FlightRadar24 stats"
+          git push

@@ -338,15 +338,19 @@ p { color: var(--text-2); line-height: 1.75; }
 .fr24 { margin-top: clamp(2.4rem, 5vw, 3.4rem); padding-top: clamp(2rem, 4vw, 2.8rem); border-top: 1px solid var(--line); }
 .fr24-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .fr24-head .eyebrow-sub { margin-top: 0; }
-.fr24-live { font-family: var(--mono); font-size: .72rem; color: var(--accent); display: inline-flex; align-items: center; gap: .5rem; }
+.fr24-badge { font-family: var(--mono); font-size: .72rem; color: var(--muted); }
 .fr24-frame {
-  display: block; background: var(--surface); border: 1px solid var(--line);
-  border-radius: 12px; padding: clamp(10px, 2vw, 16px); overflow: hidden;
-  transition: border-color .15s ease;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: clamp(18px, 3vw, 28px) clamp(16px, 3vw, 24px);
 }
-.fr24-frame:hover { border-color: var(--accent-soft); }
-.fr24-img { display: block; width: 100%; height: auto; border-radius: 6px; }
-.fr24-fallback { display: block; font-family: var(--mono); font-size: .82rem; color: var(--accent); padding: 1.1rem .2rem; }
+.fr24-stats { display: flex; flex-wrap: wrap; gap: clamp(1.6rem, 5vw, 3.2rem); }
+.fr24-stat { display: flex; flex-direction: column; gap: .4rem; }
+.fr24-icon { display: inline-block; margin-right: .5rem; font-size: .85em; color: var(--accent-br); }
+.fr24-num {
+  font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
+  font-size: clamp(1.5rem, 3.6vw, 2.1rem); color: var(--accent); line-height: 1; margin: 0;
+}
+.fr24-label { font-family: var(--mono); font-size: .7rem; color: var(--muted); letter-spacing: .02em; margin: 0; }
 .fr24-cap { font-family: var(--mono); font-size: .72rem; color: var(--muted); margin: .85rem 0 0; max-width: 64ch; line-height: 1.5; }
 
 /* ============================ CONTACT ============================ */
@@ -387,3 +391,63 @@ p { color: var(--text-2); line-height: 1.75; }
 /* Shown only if the map can't be fetched (e.g. opened via file:// with no server),
    or while JavaScript is disabled. */
 .map-fallback { font-family: var(--mono); font-size: .8rem; color: var(--muted); padding: 2rem .2rem; margin: 0; }
+
+/* Link variant of the country pill (v-item used as <a> when a write-up exists) */
+a.v-item { text-decoration: none; }
+
+/* ============================ TRAVEL PAGE (travel.html) ============================ */
+.trav-main {
+  max-width: var(--max-wide);
+  margin: 0 auto;
+  padding: clamp(48px, 8vw, 88px) var(--gutter) clamp(64px, 10vw, 112px);
+}
+.trav-wide { max-width: var(--max-wide); }
+
+.trav-hero { margin: 0 0 clamp(2rem, 5vw, 3rem); }
+.trav-flag { display: block; font-size: clamp(2rem, 6vw, 3rem); line-height: 1; margin-bottom: .6rem; }
+.trav-name {
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+  margin: 0 0 .5rem;
+  line-height: 1.1;
+}
+.trav-meta {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.trav-body { max-width: var(--max-text); }
+.trav-section { margin-bottom: clamp(1.6rem, 3vw, 2.4rem); }
+.trav-sh {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  margin: 0 0 .6rem;
+  color: var(--text);
+}
+.trav-p {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-2);
+  margin: 0;
+}
+.trav-p + .trav-p { margin-top: 1em; }
+
+.trav-soon {
+  font-family: var(--mono);
+  font-size: .84rem;
+  color: var(--faint);
+  margin: 0;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 0;
+}
+
+.trav-back-link {
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  font-family: var(--mono);
+  font-size: .8rem;
+}
+.trav-back-link a { color: var(--muted); text-decoration: none; }
+.trav-back-link a:hover { color: var(--accent); }

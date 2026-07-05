@@ -286,26 +286,35 @@
           return a.name.localeCompare(b.name);
         })
         .forEach(function (c) {
-          // Later: swap this <button> for <a href="/travel/{slug}"> once write-ups exist.
-          var el = document.createElement('button');
-          el.type = 'button';
+          var hasBlog = window.TRAVEL && window.TRAVEL[c.slug];
+          var el;
+          if (hasBlog) {
+            el = document.createElement('a');
+            el.href = '/travel.html?c=' + c.slug;
+            el.setAttribute('aria-label', c.name + ' — read write-up');
+          } else {
+            el = document.createElement('button');
+            el.type = 'button';
+            el.setAttribute('aria-label', c.name + ' — find on the map');
+            el.addEventListener('click', function () { locateCountry(c.slug); });
+            el.addEventListener('mouseenter', function () { peek(c.slug, true); });
+            el.addEventListener('mouseleave', function () { peek(c.slug, false); });
+            el.addEventListener('blur', function () { peek(c.slug, false); });
+          }
           el.className = 'v-item';
           el.setAttribute('data-slug', c.slug);
-          el.setAttribute('aria-label', c.name + ' — find on the map');
           el.textContent = c.home ? ('★ ' + c.name) : c.name;
           if (c.home) el.setAttribute('data-home', '');
-          el.addEventListener('click', function () { locateCountry(c.slug); });
-          el.addEventListener('mouseenter', function () { peek(c.slug, true); });
-          el.addEventListener('mouseleave', function () { peek(c.slug, false); });
-          el.addEventListener('blur', function () { peek(c.slug, false); });
           listEl.appendChild(el);
         });
     }
 
     // Tooltip + keyboard access for the highlighted countries.
-    function showTip(name, x, y) {
+    function showTip(name, slug, x, y) {
       if (!tip || !wrap) return;
-      tip.innerHTML = '<strong>' + name + '</strong> <span class="soon">· write-up coming soon</span>';
+      var hasBlog = window.TRAVEL && slug && window.TRAVEL[slug];
+      var suffix = hasBlog ? '· write-up available ↗' : '· write-up coming';
+      tip.innerHTML = '<strong>' + name + '</strong> <span class="soon">' + suffix + '</span>';
       tip.hidden = false;
       var r = wrap.getBoundingClientRect();
       tip.style.left = (x - r.left) + 'px';
@@ -315,16 +324,25 @@
 
     visitedPaths.forEach(function (p) {
       var name = p.getAttribute('data-name');
+      var slug = p.getAttribute('data-slug');
+      var hasBlog = window.TRAVEL && window.TRAVEL[slug];
       p.setAttribute('tabindex', '0');
       p.setAttribute('role', 'img');
-      p.setAttribute('aria-label', name + ' — visited, write-up coming soon');
-      p.addEventListener('mousemove', function (e) { showTip(name, e.clientX, e.clientY); });
+      p.setAttribute('aria-label', name + (hasBlog ? ' — read write-up' : ' — visited, write-up coming'));
+      if (hasBlog) p.style.cursor = 'pointer';
+      p.addEventListener('mousemove', function (e) { showTip(name, slug, e.clientX, e.clientY); });
       p.addEventListener('mouseleave', hideTip);
       p.addEventListener('focus', function () {
         var b = p.getBoundingClientRect();
-        showTip(name, b.left + b.width / 2, b.top + b.height / 2);
+        showTip(name, slug, b.left + b.width / 2, b.top + b.height / 2);
       });
       p.addEventListener('blur', hideTip);
+      if (hasBlog) {
+        p.addEventListener('click', function () { location.href = '/travel.html?c=' + slug; });
+        p.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = '/travel.html?c=' + slug; }
+        });
+      }
     });
   }
 
@@ -340,5 +358,25 @@
         scroller.removeAttribute('aria-busy');
         scroller.innerHTML = '<p class="map-fallback">Couldn\u2019t load the map \u2014 the countries I\u2019ve visited are listed just below.</p>';
       });
+  }
+
+  /* ---------- Flightradar24 stats: fetch fr24-stats.json (refreshed every two weeks by
+     .github/workflows/fr24-update.yml) and fill in the numbers. There's no link/fallback
+     to fall back to (the FR24 profile is private), so on failure the whole card just hides. ---------- */
+  var fr24Card = document.querySelector('.fr24');
+  if (fr24Card) {
+    fetch('fr24-stats.json')
+      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function (s) {
+        var flightsEl = document.getElementById('fr24-flights');
+        var fr24KmEl = document.getElementById('fr24-km');
+        var hoursEl = document.getElementById('fr24-hours');
+        if (flightsEl) flightsEl.textContent = s.flights.toLocaleString();
+        if (fr24KmEl) fr24KmEl.textContent = s.km.toLocaleString();
+        if (hoursEl) hoursEl.textContent = s.hours + 'h ' + s.minutes + 'm';
+        var capEl = document.getElementById('fr24-cap');
+        if (capEl && s.updated) capEl.textContent = 'Pulled from my Flightradar24 log \u2014 last updated ' + s.updated + '.';
+      })
+      .catch(function () { fr24Card.hidden = true; });
   }
 })();

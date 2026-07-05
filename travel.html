@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Travel — Albert Bouchal</title>
+  <meta name="theme-color" content="#0f0f0f" />
+  <meta name="color-scheme" content="dark light" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f0f0f'/%3E%3Ctext x='16' y='23' font-size='22' text-anchor='middle' fill='%234ecdc4' font-family='monospace'%3E%E2%86%97%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-head">
+    <div class="head-inner">
+      <a class="wordmark" href="/">albert bouchal<span class="dot">.</span></a>
+      <nav class="nav" aria-label="Primary">
+        <a href="/#travel" class="trav-back">← Travel</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="trav-main">
+    <div class="trav-wide">
+      <p class="eyebrow" aria-hidden="true">Travel</p>
+
+      <div class="trav-hero">
+        <span class="trav-flag" id="trav-flag" aria-hidden="true"></span>
+        <h1 class="trav-name" id="trav-name"></h1>
+        <p class="trav-meta" id="trav-meta"></p>
+      </div>
+
+      <div class="trav-body" id="trav-body">
+        <!-- filled by inline script below -->
+      </div>
+
+      <p class="trav-back-link"><a href="/#travel">← Back to the map</a></p>
+    </div>
+  </main>
+
+  <footer class="site-foot">
+    <div class="foot-inner">
+      <p class="foot-line">© <span id="year">2026</span> Albert Bouchal</p>
+      <p class="foot-sub">
+        <a href="https://github.com/albertbouchal/albertbouchal.github.io" target="_blank" rel="noopener noreferrer">Source&nbsp;↗</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="travel-data.js"></script>
+  <script>
+    (function () {
+      var slug = new URLSearchParams(location.search).get('c') || '';
+      if (!slug) { location.replace('/#travel'); return; }
+
+      var data = window.TRAVEL && window.TRAVEL[slug];
+      var countryName = data
+        ? data.name
+        : slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
+
+      document.title = countryName + ' — Albert Bouchal';
+
+      var flagEl = document.getElementById('trav-flag');
+      var nameEl = document.getElementById('trav-name');
+      var metaEl = document.getElementById('trav-meta');
+      var bodyEl = document.getElementById('trav-body');
+      var yearEl = document.getElementById('year');
+
+      if (flagEl) flagEl.textContent = data && data.flag ? data.flag : '';
+      if (nameEl) nameEl.textContent = countryName;
+      if (metaEl) metaEl.textContent = data && data.meta ? data.meta : '';
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+      if (bodyEl) {
+        if (data && data.sections && data.sections.length) {
+          bodyEl.innerHTML = data.sections.map(function (s) {
+            var h = s.heading
+              ? '<h2 class="trav-sh">' + s.heading + '</h2>'
+              : '';
+            return '<div class="trav-section">' + h + '<p class="trav-p">' + s.body + '</p></div>';
+          }).join('');
+        } else {
+          bodyEl.innerHTML = '<p class="trav-soon">Write-up coming — check back later.</p>';
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -279,24 +279,35 @@
         </div>
         <div class="visited-list" id="visited-list" aria-label="Countries highlighted on the map — tap a name to locate it"></div>
 
-        <!-- Flightradar24 live banner. The PNG at banners-my.flightradar24.com/<user>.png is
-             rendered server-side from Albert’s myFR24 account and refreshes on its own (FR24
-             caches it, so updates can lag a few days). We just frame it to match the site and
-             fall back to a plain link if FR24 can’t be reached.
-             TODO Albert: swap ‘albert96’ in BOTH URLs below if your Flightradar24 username changes. -->
+        <!-- Flightradar24 stats. fr24-stats.json is refreshed every two weeks by a GitHub
+             Actions workflow (.github/workflows/fr24-update.yml) that OCRs Albert's FR24
+             summary banner (FR24 doesn't expose these totals as data) and commits the file
+             only when a number changes. main.js fetches it and fills in the numbers below.
+             No link out — the FR24 profile itself is private, so the numbers stand alone.
+             TODO Albert: swap ‘albert96’ in tools/fetch-fr24.mjs if your Flightradar24
+             username changes. -->
         <aside class="fr24" aria-labelledby="fr24-h">
           <div class="fr24-head">
             <p class="eyebrow eyebrow-sub" id="fr24-h">In the air</p>
-            <span class="fr24-live"><span class="live-dot"></span>live · flightradar24</span>
+            <span class="fr24-badge">flightradar24</span>
           </div>
-          <a class="fr24-frame" href="https://my.flightradar24.com/albert96" target="_blank" rel="noopener noreferrer" aria-label="Open my Flightradar24 profile in a new tab">
-            <img class="fr24-img" src="https://banners-my.flightradar24.com/albert96.png"
-                 alt="Flightradar24 summary for Albert — flights tracked, distance flown, and a route map"
-                 loading="lazy" decoding="async"
-                 onerror="this.style.display=’none’;var f=this.parentNode.querySelector(‘.fr24-fallback’);if(f)f.hidden=false;">
-            <span class="fr24-fallback" hidden>See my flight log on Flightradar24&nbsp;↗</span>
-          </a>
-          <p class="fr24-cap">Pulled straight from my Flightradar24 log — it refreshes on its own as new flights are added.</p>
+          <div class="fr24-frame">
+            <div class="fr24-stats" id="fr24-stats" aria-live="polite">
+              <div class="fr24-stat">
+                <p class="fr24-num"><span class="fr24-icon" aria-hidden="true">&#9992;&#65038;</span><span id="fr24-flights">—</span></p>
+                <p class="fr24-label">flights tracked</p>
+              </div>
+              <div class="fr24-stat">
+                <p class="fr24-num"><span class="fr24-icon" aria-hidden="true">&#8599;</span><span id="fr24-km">—</span></p>
+                <p class="fr24-label">km flown</p>
+              </div>
+              <div class="fr24-stat">
+                <p class="fr24-num"><span class="fr24-icon" aria-hidden="true">&#9201;&#65038;</span><span id="fr24-hours">—</span></p>
+                <p class="fr24-label">in the air</p>
+              </div>
+            </div>
+          </div>
+          <p class="fr24-cap" id="fr24-cap">Pulled from my Flightradar24 log — refreshed every two weeks.</p>
         </aside>
       </div>
     </section>
@@ -350,6 +361,7 @@
     </div>
   </footer>
 
+  <script src="travel-data.js" defer></script>
   <script src="main.js" defer></script>
 </body>
 </html>
