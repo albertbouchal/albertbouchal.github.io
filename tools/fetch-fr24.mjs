@@ -4,13 +4,14 @@
 // ../fr24-stats.json only when a number actually changed, so the GitHub Actions workflow
 // (.github/workflows/fr24-update.yml) that runs this every two weeks can skip empty commits.
 // Requires the `tesseract` and `convert` (ImageMagick) CLIs on PATH — see the workflow for setup.
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// TODO Albert: keep in sync with the username in index.html's fr24-frame link if it ever changes.
+// TODO Albert: change this if your Flightradar24 username ever changes. It's the only place the
+// username appears — the site itself renders fr24-stats.json and never links to the profile.
 const FR24_USER = 'albert96';
 const BANNER_URL = `https://banners-my.flightradar24.com/${FR24_USER}.png`;
 const OUT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'fr24-stats.json');
@@ -30,7 +31,11 @@ async function main() {
     // only with nearest-neighbor sampling (`-sample`, not `-resize`) — the latter's smoothing
     // filter blurs the thin font strokes and *causes* misreads (verified locally: "55"→"SS",
     // "km"→dropped) that crisp nearest-neighbor scaling doesn't.
-    execFileSync('convert', [raw, '-sample', '300%', scaled]);
+    // ImageMagick 7 renamed `convert` to `magick` and deprecates the old name; Ubuntu 24.04
+    // runners still ship v6, which only has `convert`. Prefer the new name so this keeps working
+    // when ubuntu-latest moves to a v7 image — otherwise it would fail silently (the card hides).
+    const im = spawnSync('magick', ['-version']).status === 0 ? 'magick' : 'convert';
+    execFileSync(im, [raw, '-sample', '300%', scaled]);
     const text = execFileSync('tesseract', [scaled, 'stdout', '--psm', '6'], { encoding: 'utf8' });
 
     const flightsM = text.match(/(\d+)\s*flights/i);

@@ -16,11 +16,11 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      # v5+ is the first that runs on Node 24; v4 targeted Node 20, which GitHub removes from the
+      # runners in autumn 2026. No setup-node step: ubuntu-latest already ships Node 22, and
+      # fetch-fr24.mjs uses only built-ins plus global fetch — nothing to install. Add setup-node
+      # back if that script ever grows npm dependencies.
+      - uses: actions/checkout@v7
 
       - name: Install OCR tools
         run: sudo apt-get update && sudo apt-get install -y tesseract-ocr imagemagick

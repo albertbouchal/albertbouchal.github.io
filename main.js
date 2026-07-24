@@ -15,8 +15,7 @@
   var EQ_CIRCUMFERENCE_M = 40075017;          // WGS84 equatorial circumference, metres
   // Eastward surface speed at this latitude (~298 m/s at Prague): circumference·cosφ / day.
   var SURFACE_M_PER_S = (EQ_CIRCUMFERENCE_M * Math.cos(LAT_DEG * Math.PI / 180)) / 86400;
-  var PING_DIST_KM = 890;                          // Prague–Amsterdam great-circle, km (~30 s at orbital speed)
-  var PING_P = [[156, 128], [80, 12], [4, 128]];   // bezier ctrl pts: PRG, apex, AMS (SVG viewBox 160×160)
+  var PING_DIST_KM = 890;                     // Prague–Amsterdam great-circle, km (~30 s at orbital speed)
 
   // --- Sunrise (NOAA / "Almanac for Computers"): sunrise on a UTC date, as a UTC timestamp ---
   function rad(d) { return d * Math.PI / 180; }
@@ -53,15 +52,21 @@
   function effNow() { return Date.now() + timeOffsetMs; }
   function travelDir() { return (HELD.d ? 1 : 0) - (HELD.a ? 1 : 0); }
   function cruiseLoop(now) {
+    // Keep looping while either key is down. A and D held together cancel out (dir === 0) but
+    // must NOT stop the loop, or releasing one would leave the cruise dead until the next press.
+    if (!HELD.a && !HELD.d) { cruising = false; lastCruiseT = 0; return; }
     var dir = travelDir();
-    if (!dir) { cruising = false; lastCruiseT = 0; return; }
     var dt = lastCruiseT ? (now - lastCruiseT) : 16; lastCruiseT = now;
-    var heldFor = (now - (holdStart[dir > 0 ? 'd' : 'a'] || now)) / 1000;
-    var rate = Math.min(12, 1 + heldFor * 4.5);             // hours per second, ramps over ~2.5 s
-    timeOffsetMs += dir * rate * 3600000 * (dt / 1000);
+    if (dir) {
+      var heldFor = (now - (holdStart[dir > 0 ? 'd' : 'a'] || now)) / 1000;
+      var rate = Math.min(12, 1 + heldFor * 4.5);           // hours per second, ramps over ~2.5 s
+      timeOffsetMs += dir * rate * 3600000 * (dt / 1000);
+    }
     requestAnimationFrame(cruiseLoop);
   }
   function onKey(e, down) {
+    // Never swallow browser shortcuts — Cmd/Ctrl+A, +S and +D all collide with these keys.
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
     var key = (e.key || '').toLowerCase();
     if (key !== 'a' && key !== 'd' && key !== 's') return;
@@ -80,20 +85,25 @@
   // --- Clock geometry: a faint full ring with a bright arc swept counter-clockwise from 12 o'clock ---
   var RING = { cx: 80, cy: 80, r: 64 };
   function headXY(a) { var t = rad(nrm(a, 360)); return [RING.cx - RING.r * Math.sin(t), RING.cy - RING.r * Math.cos(t)]; }
+  function xy(p) { return p[0].toFixed(2) + ',' + p[1].toFixed(2); }
+  // Drawn as two ≤180° sweeps so the large-arc flag is always 0; sweep-flag 0 reads
+  // counter-clockwise on screen. The midpoint split is also what lets a = 360° close the ring —
+  // a single A command can't. (Previously this emitted a 62-point polyline approximating the
+  // same circle; the chords sat ≤0.01px inside it, so the drawn result is unchanged.)
   function arcPath(a) {
     a = nrm(a, 360);
-    var seg = Math.max(2, Math.ceil(a / 2)), i, t, p, d = '';
-    for (i = 0; i <= seg; i++) {
-      t = rad(a * i / seg);                                 // 0 → a, counter-clockwise from the top
-      p = [RING.cx - RING.r * Math.sin(t), RING.cy - RING.r * Math.cos(t)];
-      d += (i ? 'L' : 'M') + p[0].toFixed(2) + ',' + p[1].toFixed(2);
-    }
-    return d;
+    if (a < 0.01) return '';                                // the first instants after dawn
+    var r = RING.r + ',' + RING.r + ' 0 0 0 ';
+    return 'M' + xy(headXY(0)) + 'A' + r + xy(headXY(a / 2)) + 'A' + r + xy(headXY(a));
   }
-  function pingXY(t) {                             // quadratic bezier position at t ∈ [0,1]
-    var mt = 1 - t;
-    return [mt*mt*PING_P[0][0] + 2*mt*t*PING_P[1][0] + t*t*PING_P[2][0],
-            mt*mt*PING_P[0][1] + 2*mt*t*PING_P[1][1] + t*t*PING_P[2][1]];
+  // Ping dot position, read straight off the flight arc already drawn in index.html
+  // (<path class="ping-rail">) so the curve has exactly one definition. main.js is deferred,
+  // so the DOM is parsed by the time this runs.
+  var pingRail = document.querySelector('.ping-rail');
+  var pingLen = pingRail ? pingRail.getTotalLength() : 0;
+  function pingXY(t) {                             // rail is drawn AMS→PRG, so t = 0 is PRG
+    var p = pingRail.getPointAtLength(pingLen * (1 - t));
+    return [p.x, p.y];
   }
 
   var pageOpenTime = performance.now();
@@ -135,33 +145,32 @@
     return splitPadded(f[0].padStart(3, '0') + '.' + f[1]) + '°';
   }
 
-  // Only touch the DOM when a value actually changes. The rAF loop runs every frame, but the
-  // km string changes ~30×/s and the degree string far less often, so most frames would be
-  // redundant innerHTML writes (each one re-parses HTML). Caching skips those.
+  // Only touch the DOM when a value actually changes. The rAF loop runs every frame, but most
+  // frames recompute a string identical to the last one — measured over 10 s at 60 fps, the km
+  // readout repeats on ~50% of frames, the arc path on ~75%, and the head dot on ~99%. `apply`
+  // picks the sink; the default is textContent.
   var disp = {};
-  function put(el, key, val, asHTML) {
+  function put(el, key, val, apply) {
     if (!el || disp[key] === val) return;
     disp[key] = val;
-    if (asHTML) el.innerHTML = val; else el.textContent = val;
+    if (apply) apply(el, val); else el.textContent = val;
   }
+  function asHTML(el, v) { el.innerHTML = v; }
+  function asD(el, v) { el.setAttribute('d', v); }
+  function asPoint(el, v) { var p = v.split(','); el.setAttribute('cx', p[0]); el.setAttribute('cy', p[1]); }
 
   function tickCounters() {
     // orbital km — your real session, never time-travelled
     var elapsedKm = (performance.now() - pageOpenTime) / 1000 * EARTH_SPEED_KM_PER_S;
-    put(kmEl, 'km', fmtKm(elapsedKm), true);
+    put(kmEl, 'km', fmtKm(elapsedKm), asHTML);
 
     // ping: dot bounces PRG→AMS→PRG every PING_DIST_KM (~30 s per leg)
-    if (pingDotEl) {
+    if (pingLen) {
       var cycle = elapsedKm % (2 * PING_DIST_KM);
       var pingT = cycle <= PING_DIST_KM ? cycle / PING_DIST_KM : (2 * PING_DIST_KM - cycle) / PING_DIST_KM;
-      var pp = pingXY(pingT), pk = pp[0].toFixed(1) + ',' + pp[1].toFixed(1);
-      if (disp.pingDot !== pk) {
-        disp.pingDot = pk;
-        pingDotEl.setAttribute('cx', pp[0].toFixed(1));
-        pingDotEl.setAttribute('cy', pp[1].toFixed(1));
-      }
+      put(pingDotEl, 'pingDot', xy(pingXY(pingT)), asPoint);
     }
-    put(pingCountEl, 'pingCount', Math.floor(elapsedKm / PING_DIST_KM).toLocaleString(), false);
+    put(pingCountEl, 'pingCount', Math.floor(elapsedKm / PING_DIST_KM).toLocaleString());
 
     // Earth-rotation clock — driven by the (possibly time-travelled) effective clock
     var now = effNow();
@@ -169,51 +178,43 @@
     if (sr != null) {
       var hrs = (now - sr) / 3600000;
       var degSince = hrs * 15;                              // Earth turns 15°/h
-      put(degEl, 'deg', fmtDeg(degSince), true);
-      put(distEl, 'dist', Math.round(hrs * 3600 * SURFACE_M_PER_S / 1000).toLocaleString(), false);
-      var d = arcPath(degSince);
-      if (arcEl && disp.arc !== d) { disp.arc = d; arcEl.setAttribute('d', d); }
-      if (headEl) {
-        var hp = headXY(degSince), hk = hp[0].toFixed(2) + ',' + hp[1].toFixed(2);
-        if (disp.head !== hk) { disp.head = hk; headEl.setAttribute('cx', hp[0].toFixed(2)); headEl.setAttribute('cy', hp[1].toFixed(2)); }
-      }
+      put(degEl, 'deg', fmtDeg(degSince), asHTML);
+      put(distEl, 'dist', Math.round(hrs * 3600 * SURFACE_M_PER_S / 1000).toLocaleString());
+      put(arcEl, 'arc', arcPath(degSince), asD);
+      put(headEl, 'head', xy(headXY(degSince)), asPoint);
     }
 
     // time-travel status line
     if (ttEl) {
-      if (timeOffsetMs === 0) { put(ttEl, 'tt', 'live', false); if (spinBlock) spinBlock.classList.remove('traveling'); }
-      else { put(ttEl, 'tt', pragueFmt.format(new Date(now)) + ' · ' + fmtOffset(timeOffsetMs), false); if (spinBlock) spinBlock.classList.add('traveling'); }
+      if (timeOffsetMs === 0) { put(ttEl, 'tt', 'live'); if (spinBlock) spinBlock.classList.remove('traveling'); }
+      else { put(ttEl, 'tt', pragueFmt.format(new Date(now)) + ' · ' + fmtOffset(timeOffsetMs)); if (spinBlock) spinBlock.classList.add('traveling'); }
     }
     requestAnimationFrame(tickCounters);
   }
   if (kmEl || degEl) requestAnimationFrame(tickCounters);
 
-  /* ---------- Country count: animate to total when scrolled into view ---------- */
-  var TOTAL_COUNTRIES = 31;
-  var countEl = document.getElementById('country-count');
-  if (countEl) {
-    if (prefersReduced || !('IntersectionObserver' in window)) {
-      countEl.textContent = TOTAL_COUNTRIES;
-    } else {
-      countEl.textContent = '0';
-      var travel = document.getElementById('travel');
-      var counted = false;
-      var cObs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting && !counted) {
-            counted = true;
-            var start = performance.now(), dur = 900;
-            (function tick(now) {
-              var t = Math.min(1, (now - start) / dur);
-              var eased = 1 - Math.pow(1 - t, 3);
-              countEl.textContent = Math.round(eased * TOTAL_COUNTRIES);
-              if (t < 1) requestAnimationFrame(tick);
-            })(start);
-          }
-        });
-      }, { threshold: 0.4 });
-      cObs.observe(travel);
-    }
+  /* ---------- Country count: derived from the map, animated when scrolled into view ----------
+     The highlighted paths in world-map.svg are the single source of truth — initMap() passes
+     their count in. The numbers hard-coded in index.html are only the static fallback for when
+     the map can't load (or JS is off), and are overwritten here as soon as it does. */
+  function initCount(total) {
+    var countEl = document.getElementById('country-count');
+    var totalEl = document.getElementById('country-total');
+    var travel = document.getElementById('travel');
+    if (totalEl) totalEl.textContent = total;
+    if (!countEl || !travel) return;
+    if (prefersReduced || !('IntersectionObserver' in window)) { countEl.textContent = total; return; }
+    countEl.textContent = '0';
+    new IntersectionObserver(function (entries, obs) {
+      if (!entries.some(function (e) { return e.isIntersecting; })) return;
+      obs.disconnect();                                     // count up once, then stop watching
+      var start = performance.now(), dur = 900;
+      (function tick(now) {
+        var t = Math.min(1, (now - start) / dur);
+        countEl.textContent = Math.round((1 - Math.pow(1 - t, 3)) * total);
+        if (t < 1) requestAnimationFrame(tick);
+      })(start);
+    }, { threshold: 0.4 }).observe(travel);
   }
 
   /* ---------- Active nav link while scrolling ---------- */
@@ -242,11 +243,18 @@
   /* ---------- World map: fetch world-map.svg, inject it, then wire interactions ---------- */
   var scroller = document.querySelector('.map-scroll');
 
+  // A country has a write-up once it gets an entry in travel-data.js, keyed by the same
+  // data-slug the map path carries. That turns its pill into a link and makes the map clickable.
+  function hasWriteUp(slug) { return !!(slug && window.TRAVEL && window.TRAVEL[slug]); }
+  function writeUpHref(slug) { return '/travel.html?c=' + slug; }
+
   function initMap() {
     var visitedPaths = Array.prototype.slice.call(document.querySelectorAll('.world .visited'));
     var listEl = document.getElementById('visited-list');
     var tip = document.getElementById('map-tip');
     var wrap = document.querySelector('.map-wrap');
+
+    initCount(visitedPaths.length);
 
     // Find a country path by slug, center it in the scroller, and pulse it.
     function getPath(slug) { return document.querySelector('.world .country[data-slug="' + slug + '"]'); }
@@ -286,11 +294,10 @@
           return a.name.localeCompare(b.name);
         })
         .forEach(function (c) {
-          var hasBlog = window.TRAVEL && window.TRAVEL[c.slug];
           var el;
-          if (hasBlog) {
+          if (hasWriteUp(c.slug)) {
             el = document.createElement('a');
-            el.href = '/travel.html?c=' + c.slug;
+            el.href = writeUpHref(c.slug);
             el.setAttribute('aria-label', c.name + ' — read write-up');
           } else {
             el = document.createElement('button');
@@ -312,8 +319,7 @@
     // Tooltip + keyboard access for the highlighted countries.
     function showTip(name, slug, x, y) {
       if (!tip || !wrap) return;
-      var hasBlog = window.TRAVEL && slug && window.TRAVEL[slug];
-      var suffix = hasBlog ? '· write-up available ↗' : '· write-up coming';
+      var suffix = hasWriteUp(slug) ? '· write-up available ↗' : '· write-up coming';
       tip.innerHTML = '<strong>' + name + '</strong> <span class="soon">' + suffix + '</span>';
       tip.hidden = false;
       var r = wrap.getBoundingClientRect();
@@ -325,7 +331,7 @@
     visitedPaths.forEach(function (p) {
       var name = p.getAttribute('data-name');
       var slug = p.getAttribute('data-slug');
-      var hasBlog = window.TRAVEL && window.TRAVEL[slug];
+      var hasBlog = hasWriteUp(slug);
       p.setAttribute('tabindex', '0');
       p.setAttribute('role', 'img');
       p.setAttribute('aria-label', name + (hasBlog ? ' — read write-up' : ' — visited, write-up coming'));
@@ -338,9 +344,10 @@
       });
       p.addEventListener('blur', hideTip);
       if (hasBlog) {
-        p.addEventListener('click', function () { location.href = '/travel.html?c=' + slug; });
+        var open = function () { location.href = writeUpHref(slug); };
+        p.addEventListener('click', open);
         p.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = '/travel.html?c=' + slug; }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
         });
       }
     });

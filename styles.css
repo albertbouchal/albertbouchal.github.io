@@ -154,29 +154,33 @@ p { color: var(--text-2); line-height: 1.75; }
   .hero-instruments { grid-template-columns: 1fr; gap: 2.4rem; }
 }
 
-/* Signature: live Earth-orbit distance counter */
-.counter { margin-top: 0; }
-.counter-readout {
+/* Shared instrument voice — both hero instruments (the orbit counter and the rotation clock)
+   are typographically identical, so their parts share one set of rules. Anything genuinely
+   specific to one of them is a small modifier further down. */
+.inst-label { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin: 0 0 .5rem; }
+.inst-readout {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem .55rem;
   font-family: var(--mono);
 }
-.counter-arrow { font-size: clamp(1.4rem, 4vw, 1.9rem); color: var(--accent); line-height: 1; }
-.counter-num {
+.inst-arrow { font-size: clamp(1.4rem, 4vw, 1.9rem); color: var(--accent); line-height: 1; }
+.inst-num {
   font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 500; color: var(--accent);
   letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.counter-unit { font-size: clamp(.92rem, 2vw, 1.05rem); color: var(--muted); white-space: nowrap; }
-.inst-label { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin: 0 0 .5rem; }
+.inst-unit { font-size: clamp(.92rem, 2vw, 1.05rem); color: var(--muted); white-space: nowrap; }
+.inst-sub { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin: .55rem 0 0; }
+.inst-track { display: block; width: 100%; max-width: 168px; height: auto; margin: .85rem 0 .65rem; overflow: visible; }
+.inst-foot { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin: 0; max-width: 48ch; line-height: 1.5; }
+.inst-foot span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .num-ghost { color: var(--ghost); }
-.counter-sub {
-  display: flex; align-items: center; gap: .55rem;
-  font-family: var(--mono); font-size: .78rem; color: var(--muted); margin: .55rem 0 0;
-}
+
+/* Signature: live Earth-orbit distance counter */
+.counter-sub { display: flex; align-items: center; gap: .55rem; }   /* room for the live dot */
+.counter-foot { margin-top: .6rem; max-width: none; }
 .live-dot {
   width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
   box-shadow: 0 0 0 0 var(--accent-soft);
 }
-.counter-foot { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin: .6rem 0 0; }
 
 @keyframes pulse {
   0%   { box-shadow: 0 0 0 0 rgba(78,205,196,.55); }
@@ -188,21 +192,9 @@ p { color: var(--text-2); line-height: 1.75; }
 }
 
 /* Secondary hero instrument: an Earth-rotation clock (degrees since sunrise). */
-.spin { margin-top: 0; }
-.spin-readout { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem .55rem; font-family: var(--mono); }
-.spin-arrow { font-size: clamp(1.4rem, 4vw, 1.9rem); color: var(--accent); line-height: 1; }
-.spin-num {
-  font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 500; color: var(--accent);
-  letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.spin-unit { font-size: clamp(.92rem, 2vw, 1.05rem); color: var(--muted); white-space: nowrap; }
-.spin-sub { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin: .55rem 0 0; }
-.spin-track { display: block; width: 100%; max-width: 168px; height: auto; margin: .85rem 0 .65rem; overflow: visible; }
 .spin-ring { fill: none; stroke: var(--line); stroke-width: 1.5; }
 .spin-arc  { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
 .spin-head { fill: var(--accent); }
-.spin-foot { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin: 0; max-width: 48ch; line-height: 1.5; }
-.spin-foot span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .spin-ctrl { font-family: var(--mono); font-size: .7rem; color: var(--faint); margin: .6rem 0 0; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .spin-ctrl #spin-tt { color: var(--muted); }
 .spin.traveling .spin-ctrl #spin-tt { color: var(--accent); }
@@ -212,14 +204,13 @@ p { color: var(--text-2); line-height: 1.75; }
   padding: .05rem .35rem; line-height: 1.4;
 }
 
-/* Ping track: flight-path arc bouncing a dot PRG ↔ AMS */
-.ping-track { display: block; width: 100%; max-width: 168px; height: auto; margin: .85rem 0 .65rem; overflow: visible; }
+/* Ping track: flight-path arc bouncing a dot PRG ↔ AMS.
+   main.js reads the dot's position off .ping-rail itself, so this `d` is the only definition
+   of the curve — move the apex here and the dot follows. */
 .ping-rail { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-linecap: round; }
 .ping-end  { fill: var(--faint); }
 .ping-dot  { fill: var(--accent); }
 .ping-label { font-family: var(--mono); font-size: 9px; fill: var(--faint); }
-.ping-foot { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin: 0; max-width: 48ch; line-height: 1.5; }
-.ping-foot span { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* ============================ ABOUT ============================ */
 .about-body p + p { margin-top: 1.1rem; }
@@ -329,6 +320,10 @@ p { color: var(--text-2); line-height: 1.75; }
 }
 .v-item:hover, .v-item:focus-visible { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); outline: none; }
 .v-item[data-home] { color: var(--accent); border-color: rgba(78,205,196,.35); }
+a.v-item { text-decoration: none; }   /* the pill becomes an <a> once a write-up exists */
+/* Shown only if the map can't be fetched (e.g. opened via file:// with no server),
+   or while JavaScript is disabled. */
+.map-fallback { font-family: var(--mono); font-size: .8rem; color: var(--muted); padding: 2rem .2rem; margin: 0; }
 /* map highlight driven by the country list */
 .country.hl { fill: var(--accent-br); }
 @keyframes countryFlash { 0%, 100% { fill: var(--accent); } 35% { fill: var(--accent-br); } }
@@ -370,30 +365,6 @@ p { color: var(--text-2); line-height: 1.75; }
   display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .8rem 1.5rem;
 }
 .foot-line { font-family: var(--mono); font-size: .76rem; color: var(--muted); margin: 0; }
-.foot-sub { font-size: .8rem; color: var(--faint); margin: 0; }
-.foot-sub a { color: var(--accent); text-decoration: none; }
-.foot-sub a:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-/* ============================ RESPONSIVE ============================ */
-@media (max-width: 600px) {
-  .fr24-head { gap: .4rem; }
-}
-@media (max-width: 520px) {
-  .head-inner { flex-wrap: wrap; }
-  .nav { width: 100%; gap: .9rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
-
-/* Shown only if the map can't be fetched (e.g. opened via file:// with no server),
-   or while JavaScript is disabled. */
-.map-fallback { font-family: var(--mono); font-size: .8rem; color: var(--muted); padding: 2rem .2rem; margin: 0; }
-
-/* Link variant of the country pill (v-item used as <a> when a write-up exists) */
-a.v-item { text-decoration: none; }
 
 /* ============================ TRAVEL PAGE (travel.html) ============================ */
 .trav-main {
@@ -451,3 +422,17 @@ a.v-item { text-decoration: none; }
 }
 .trav-back-link a { color: var(--muted); text-decoration: none; }
 .trav-back-link a:hover { color: var(--accent); }
+
+/* ============================ RESPONSIVE ============================ */
+@media (max-width: 600px) {
+  .fr24-head { gap: .4rem; }
+}
+@media (max-width: 520px) {
+  .head-inner { flex-wrap: wrap; }
+  .nav { width: 100%; gap: .9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

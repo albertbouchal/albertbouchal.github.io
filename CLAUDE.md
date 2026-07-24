@@ -41,7 +41,17 @@ Put all files in the repo root → repo Settings → Pages → Deploy from branc
   interactivity, the country counter, smooth scrolling, etc.
 - **`world-map.svg`** — standalone inline SVG world map (Natural Earth, ~175 country paths).
   Visited countries carry `class="country visited"`. It is fetched and injected by `main.js`
-  (rather than `<img>`-ed) so the paths stay themeable and interactive.
+  (rather than `<img>`-ed) so the paths stay themeable and interactive. **It is also the single
+  source of truth for how many countries are marked** — `main.js` counts the highlighted paths.
+- **`travel.html`** — shared template for a per-country write-up, addressed as
+  `/travel.html?c=<slug>`. Reads `window.TRAVEL` and fills itself in from a small inline script.
+- **`travel-data.js`** — the write-up content, one entry per slug (must match the map's
+  `data-slug`). Adding an entry is what publishes a write-up: the country's pill becomes a link
+  and clicking it on the map navigates there.
+- **`fr24-stats.json`** — flight totals rendered in the travel section. Machine-written; don't
+  hand-edit. Refreshed by `.github/workflows/fr24-update.yml` on the 1st & 15th, which runs
+  **`tools/fetch-fr24.mjs`** (OCRs Albert's FR24 banner — FR24 exposes no data API) and commits
+  only when a number changed.
 - **`tools/generate.mjs`** *(optional)* — regenerates the country `<path>` list. See "Editing the map".
 
 ## Design system (tokens live in `styles.css` `:root`)
@@ -53,9 +63,16 @@ Put all files in the repo root → repo Settings → Pages → Deploy from branc
   it on ordinary decoration.
 - **Fonts:** Inter (`--sans`, body & headings) + JetBrains Mono (`--mono`, numbers/labels/data),
   loaded from Google Fonts in `<head>`.
-- **Widths:** `--max-wide 1000px` is used for every section now. `--max-text 720px` still exists
-  but is effectively legacy (all sections were widened to `--max-wide` per the latest design).
+- **Widths:** `--max-wide 1000px` is used for every section on the main page. `--max-text 720px`
+  is **not** legacy — it's what keeps `.trav-body` readable on `travel.html`.
   Gutter: `--gutter clamp(20px,5vw,40px)`.
+- **`.wide`** is currently a no-op: `main` is already `max-width: var(--max-wide)`, so the
+  `<div class="wide">` wrappers constrain nothing. They're kept deliberately as the hook for
+  narrowing the prose sections again later — don't "clean them up" without asking.
+- **The two hero instruments share one set of `.inst-*` rules** (`.inst-label`, `.inst-readout`,
+  `.inst-arrow`, `.inst-num`, `.inst-unit`, `.inst-sub`, `.inst-track`, `.inst-foot`). Only
+  genuinely instrument-specific bits are modifiers (`.counter-sub` adds flex for the live dot,
+  `.counter-foot` its own spacing). Style the shared class, not one instrument.
 
 ## The hero: two live instruments — read this before touching it
 
@@ -78,8 +95,10 @@ full ring + bright teal arc), an "≈ N km carried east" line, and keyboard hint
   returns a UTC timestamp; `lastSunriseMs(now)` returns today's or yesterday's sunrise as
   appropriate. Verified accurate for Prague (≈ 04:55 summer, 07:58 winter, 06:06 equinox).
 - **Arc geometry:** `RING = {cx:80, cy:80, r:64}` in a 160×160 viewBox. `arcPath(deg)` sweeps
-  **counter-clockwise from 12 o'clock** (Earth's eastward spin seen from above the North Pole).
-  `headXY(deg)` positions the leading dot.
+  **counter-clockwise from 12 o'clock** (Earth's eastward spin seen from above the North Pole),
+  emitting two SVG `A` commands — split at the midpoint so the large-arc flag is always 0 and so
+  360° still closes the ring (one `A` can't draw a full circle). `headXY(deg)` positions the
+  leading dot.
 - **Distance east:** `SURFACE_M_PER_S = 40075017·cos(lat)/86400 ≈ 298 m/s` at Prague's latitude.
 
 ### Time travel (keyboard) — scrubs the rotation clock ONLY
@@ -89,6 +108,10 @@ full ring + bright teal arc), an "≈ N km carried east" line, and keyboard hint
   keydown/keyup + an rAF cruise loop (`onKey`, `cruiseLoop`). The status line shows the simulated
   Prague time + offset (Intl `Europe/Prague`) and reads "live" at offset 0; `.spin.traveling`
   highlights it. **Only the rotation clock reads `effNow()`; the km counter uses real elapsed time.**
+- `onKey` **bails on any modifier key before calling `preventDefault()`.** Without that, the page
+  swallows Cmd/Ctrl+A, +S and +D. Don't remove the guard.
+- `cruiseLoop` keeps running while *either* key is held, even when A and D cancel out — stopping
+  on `dir === 0` would leave the cruise dead after you release one of them.
 
 ### Ghost placeholder zeros (the big numbers)
 - The big numbers show **dim leading zeros that "fill in"** as the value grows. `fmtKm` pads km to
@@ -101,24 +124,37 @@ full ring + bright teal arc), an "≈ N km carried east" line, and keyboard hint
   spans are regenerated on every change (confirmed).
 
 ### Render loop & efficiency
-One `requestAnimationFrame` loop (`tickCounters`) updates everything, but it **only writes to the
-DOM when a displayed value actually changes** (a `disp{}` cache + a `put()` helper), so identical
-frames don't re-parse HTML or thrash layout. Keep that pattern if you add readouts.
+One `requestAnimationFrame` loop (`tickCounters`) updates everything, and **writes to the DOM only
+when a displayed value actually changes** — a `disp{}` cache plus a `put(el, key, val, apply)`
+helper, where `apply` picks the sink (`asHTML` / `asD` / `asPoint`, default `textContent`). Use
+`put()` for any readout you add rather than hand-rolling another cache.
+
+Measured over 10 s at 60 fps, the guard skips ~50% of km writes, ~75% of arc writes and ~99% of
+head-dot writes. Two caveats worth knowing:
+
+- **The guard is on writes, not on work.** Every frame still recomputes everything, including a
+  full NOAA sunrise solve (`lastSunriseMs`) for a value that changes once a day. It's a handful of
+  trig ops, so it's been left alone deliberately — simpler beats marginally faster here.
+- **The ping dot moves nearly every frame** (~97%), so its cache buys almost nothing. It goes
+  through `put()` anyway for uniformity, not for speed.
 
 ## Travel section & map
 
 `#travel` fetches `world-map.svg` into `.map-scroll`, then wires up the visited countries
-(tooltips, keyboard focus) with a text-list fallback if the fetch fails. The country counter
-animates up to `TOTAL_COUNTRIES`. There is also an "IN THE AIR" / Flightradar24 block intended as
-an optional live-flight banner, with a graceful fallback when it isn't configured.
+(tooltips, keyboard focus) with a text-list fallback if the fetch fails. **The country count is
+derived from the map** — `initMap()` passes `visitedPaths.length` to `initCount()`, which fills
+both `#country-total` (the heading) and `#country-count` (the animated figure). The numbers written
+into `index.html` are only the no-JS / map-failed fallback. There is also an "IN THE AIR" /
+Flightradar24 card fed by `fr24-stats.json`; it hides itself entirely if the fetch fails.
 
 ## Editing the map / marking a visited country
 
 Two ways:
 
 1. **Quick (recommended):** in `world-map.svg`, find the country's `<path …>` and change
-   `class="country"` → `class="country visited"` (optionally add `data-slug` / `data-name`). Then
-   bump `TOTAL_COUNTRIES` in `main.js` if you want the counter to match.
+   `class="country"` → `class="country visited"` (add `data-slug` / `data-name` — the list and
+   tooltips need them). Nothing else to update: the counter reads the map. Optionally refresh the
+   fallback numbers in `index.html` so no-JS visitors see the right figure.
 2. **Regenerate (optional):** edit the `VISITED` map in `tools/generate.mjs`, then
    `cd tools && npm install && node generate.mjs`. It writes `paths.txt` (the `<path>` list); paste
    that into the `<g class="world">…</g>` group in `world-map.svg`. Deps: `topojson-client`,
@@ -131,15 +167,18 @@ Two ways:
 - `RING` — clock circle geometry; sweep direction is inside `arcPath`.
 - Cruise feel — the `rate` ramp in `cruiseLoop`; the ±1 h step in `onKey`.
 - Ghost field widths — `padStart(6, …)` in `fmtKm`, `padStart(3, …)` in `fmtDeg`.
-- `TOTAL_COUNTRIES` — the count-up animation target.
+- `PING_DIST_KM` — km per Prague–Amsterdam leg. The *curve* the dot follows is not a knob here:
+  it's the `d` on `<path class="ping-rail">` in `index.html`, which `main.js` samples with
+  `getPointAtLength()`. Edit the path and the dot follows.
 
 ## TODOs (real content for Albert — search `index.html` for "TODO Albert")
 
 - Real GitHub / LinkedIn / email / X URLs and the @czechrockets profile link.
-- Project details in "Selected Work" (names, links, blurbs).
-- Mark the remaining visited countries (see above) and set `TOTAL_COUNTRIES`.
+- Project details in "Selected Work" (names, links, blurbs) — two placeholder `.proj` slots wait.
+- Mark the remaining visited countries (see above).
 - Favorites: real links / logos for "in the kit".
-- Flightradar24 banner: wire up a real feed or remove it.
+- Travel write-ups: add entries to `travel-data.js` (only `czech-republic` exists, and it's a
+  placeholder).
 - Replace any placeholder copy in About / Contact.
 
 ## Conventions & gotchas
@@ -151,12 +190,25 @@ Two ways:
 - Don't reintroduce a `min-width` slot on the big numbers — the ghost padding handles width.
 - The map must be served over HTTP (see "Running").
 
-## Recent state (last working session)
+## Recent state (last working session — simplification pass)
 
-- Rebuilt the rotation instrument as the **sunrise clock** (CCW arc from 12 o'clock, real degrees
-  since sunrise) with **keyboard time-travel**.
-- Matched both hero readouts' styling and added the "You travelled" / "The Earth has rotated"
-  labels.
-- Added the **ghost placeholder zeros**; widened all sections to `--max-wide`.
-- Bumped `--ghost` contrast (dark `#4a4a4a` / light `#bdbdbd`) so the zeros are clearly visible,
-  and made the rAF loop write to the DOM only when a value changes.
+A review pass aimed at cutting complexity **without changing the design or any behaviour**:
+
+- **Two bug fixes:** `onKey` no longer swallows Cmd/Ctrl+A/S/D; `cruiseLoop` no longer deadlocks
+  when A and D are held together.
+- **`arcPath` draws two SVG `A` arcs** instead of generating a ~62-point polyline every frame.
+  Verified identical: endpoints match exactly at every angle, and the old chords sat 0.0097px
+  inside the true circle against a 3px stroke. Path strings went from up to 2,314 chars to ~60.
+- **The ping curve has one definition.** `PING_P` and the hand-written bezier evaluator are gone;
+  `main.js` samples `.ping-rail` with `getPointAtLength()`.
+- **`put()` took over the three hand-rolled caches** (ping dot, arc, head dot) via `apply` sinks.
+- **Duplicate CSS merged** into the shared `.inst-*` rules (the `.counter-*`/`.spin-*`/`.ping-*`
+  typography was written twice, near byte-identical).
+- **The country count derives from the map** (`initCount(visitedPaths.length)`); `TOTAL_COUNTRIES`
+  is gone, as is the never-disconnected IntersectionObserver.
+- **`hasWriteUp()` / `writeUpHref()`** replace four copies of the `window.TRAVEL` lookup.
+- Removed the footer "Source" links from both pages; dropped stale TODOs; moved orphaned rules at
+  the end of `styles.css` back into their sections.
+
+Kept deliberately: the `.wide` wrappers, `--max-text`, the placeholder project slots, the
+`travel-data.js` plumbing, and the FR24 OCR script.
